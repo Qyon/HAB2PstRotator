@@ -7,9 +7,9 @@ import socket
 from Tkinter import *
 from threading import Thread
 from Queue import Queue, Empty
-from time import sleep
+from time import sleep, time
 
-__version__ = "0.3.2"
+__version__ = "0.4.1"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
@@ -56,7 +56,8 @@ def pst_sender(com_queue, com_back_queue):
                     if com_back_queue.empty():
                         com_back_queue.put({
                             'vehicle': vehicle_data,
-                            'ttl': ttl
+                            'ttl': ttl,
+                            'name': vehicle_name,
                         })
             hab_data = json.loads(
                 urllib2.urlopen(
@@ -86,7 +87,9 @@ def update_statusbar(args):
         data = None
     if data:
         if data.get('ttl'):
-            args[1].status.set("Update POS in: %ds", data.get('ttl', 0)/10)
+            #args[1].status.set("Update POS in: %ds", data.get('ttl', 0)/10)
+            args[1].status.set("Update POS for ''%s'' in: %ds", data.get('name'), data.get('ttl', 0)/10)
+
     args[0].after(500, update_statusbar, args)
 
 class StatusBar(Frame):
@@ -155,15 +158,41 @@ class App:
         self.track_button.config(state=DISABLED)
         self.status.set("Loading list")
         try:
-            hab_data = json.loads(urllib2.urlopen(
-                "http://spacenear.us/tracker/data.php?format=json&position_id=0&max_positions=0").read())
+            hab_data = []
+            start_key = time() - 1*365*24*60*60
+            while True:
+                tmp = json.loads(urllib2.urlopen(
+                    "http://habitat.habhub.org/habitat/_design/flight/_view/end_start_including_payloads?include_docs=true&limit=300&startkey=[%s]" % start_key).read())
+                if 'rows' not in tmp or not tmp['rows']:
+                    break
+                hab_data.extend(tmp['rows'])
+                start_key = tmp['rows'][-1]['key'][0] + 1
+                self.status.set("Got data %d of %d" % (tmp['offset'], tmp['total_rows']))
+                self.root.update()
+
             self.listbox.delete(0, END)
             self.vehicle_data = {}
-            for position in hab_data['positions']['position']:
-                vehicle_name = position['vehicle']
-                if not vehicle_name in self.vehicle_data:
-                    self.vehicle_data[vehicle_name] = position
+
+            for row in hab_data:
+                if 'doc' in row and 'sentences' in row['doc']:
+                    for sentence in row['doc']['sentences']:
+                        vehicle_name = sentence.get('callsign')
+                        if vehicle_name:
+                            if vehicle_name not in self.vehicle_data:
+                                pass
+                            self.vehicle_data[vehicle_name] = {
+                                'callsign': vehicle_name,
+                                'name': row['doc'].get('name'),
+                                'date': row['doc'].get('time_created', ''),
+                                'listed': row['key'][3],
+                                'start_date': row['key'][0],
+                                'end_date': row['key'][1],
+                            }
             self.vehicle_list = sorted(self.vehicle_data.keys())
+            now = time()
+            for vehicle_name, vehicle_data in self.vehicle_data.iteritems():
+                if vehicle_data['listed'] and (vehicle_data['end_date'] > now or vehicle_data['start_date'] > now):
+                    self.vehicle_list.insert(0, vehicle_name)
             for vehicle_name in self.vehicle_list:
                 self.listbox.insert(END, vehicle_name)
         except:
