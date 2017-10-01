@@ -38,11 +38,33 @@ setup(
     version=hab2pstrotator.__version__,
     author=hab2pstrotator.__author__,
     author_email=hab2pstrotator.__author_email__,
-    windows=['hab2pstrotator.py'],
+    windows=[
+        {
+            "script": "hab2pstrotator.py",
+            "icon_resources": [(0, "spacenearus.ico")]
+        }
+    ],
     data_files=find_data_files('','',[
         '*.ico',
     ]),
 )
+setup(
+    name=hab2pstrotator.__app_name__,
+    description=hab2pstrotator.__full_app_name__,
+    version=hab2pstrotator.__version__,
+    author=hab2pstrotator.__author__,
+    author_email=hab2pstrotator.__author_email__,
+    windows=[
+        {
+            "script": "hab2pstrotator.py",
+            "icon_resources": [(0, "spacenearus.ico")]
+        }
+    ],
+    data_files=find_data_files('','',[
+        '*.ico',
+    ]),
+)
+
 
 import os
 import zipfile

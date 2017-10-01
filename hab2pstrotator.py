@@ -9,7 +9,7 @@ from threading import Thread
 from Queue import Queue, Empty
 from time import sleep, time
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
@@ -148,7 +148,7 @@ class App:
         self.track_button.config(state=DISABLED)
 
         root.resizable(width=FALSE, height=FALSE)
-        root.iconbitmap('spacenearus.ico')
+        #root.iconbitmap('spacenearus.ico')
         root.title(__full_app_name__)
 
 
