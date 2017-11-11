@@ -9,7 +9,7 @@ from threading import Thread
 from Queue import Queue, Empty
 from time import sleep, time
 
-__version__ = "0.4.4"
+__version__ = "0.4.5"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
@@ -24,6 +24,8 @@ def pst_sender(com_queue, com_back_queue):
     """
     vehicle_data = None
     last_position_id = 0
+    last_sequence_id = 0
+    next_wait = 0
     vehicle_name = None
     vehicle_name_old = None
     while True:
@@ -39,10 +41,14 @@ def pst_sender(com_queue, com_back_queue):
             if vehicle_name_old != vehicle_name:
                 vehicle_name_old = vehicle_name
                 last_position_id = 0
+                last_sequence_id = 0
                 vehicle_data = None
             else:
                 print 'sleep'
                 ttl = 150
+                if next_wait:
+                    ttl = next_wait
+                    next_wait = 0
                 while ttl > 0:
                     try:
                         data = com_queue.get_nowait()
@@ -59,7 +65,7 @@ def pst_sender(com_queue, com_back_queue):
                             'ttl': ttl,
                             'name': vehicle_name,
                         })
-            data_url = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=0&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
+            data_url = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=1&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
             print data_url
             hab_data = json.loads(
                 urllib2.urlopen(
@@ -70,12 +76,17 @@ def pst_sender(com_queue, com_back_queue):
                 for position in hab_data['positions']['position']:
                     if position['vehicle'] == vehicle_name:
                         if not last_position_id or int(position['position_id']) > last_position_id:
-                            vehicle_data = position
-                            last_position_id = int(vehicle_data['position_id'])
+                            last_position_id = int(position['position_id'])
+                            if not last_sequence_id or last_sequence_id < int(position['sequence']):
+                                vehicle_data = position
+                            else:
+                                next_wait = 50
+
             else:
                 print "No new positions"
         if vehicle_data:
             last_position_id = int(vehicle_data['position_id'])
+            last_sequence_id = int(vehicle_data['sequence'])
             pst_command = "<PST><LLH>%(gps_lat)s,%(gps_lon)s,%(gps_alt)s</LLH></PST>" % vehicle_data
             print "%s %s" % (vehicle_data['gps_time'], pst_command,)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
