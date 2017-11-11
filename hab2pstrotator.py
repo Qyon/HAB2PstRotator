@@ -59,17 +59,18 @@ def pst_sender(com_queue, com_back_queue):
                             'ttl': ttl,
                             'name': vehicle_name,
                         })
+            data_url = "http://spacenear.us/tracker/data.php?vehicles=%s&format=json&position_id=%d&max_positions=0" % (vehicle_name, last_position_id,)
+            print data_url
             hab_data = json.loads(
                 urllib2.urlopen(
-                    "http://spacenear.us/tracker/data.php?vehicles=%s&format=json&position_id=%d&max_positions=0" % (
-                        vehicle_name, last_position_id,)
+                    data_url
                 ).read()
             )
             if hab_data.get('positions'):
                 for position in hab_data['positions']['position']:
                     if position['vehicle'] == vehicle_name:
-                        vehicle_data = position
-                        continue
+                        if not last_position_id or int(position['position_id']) > last_position_id:
+                            vehicle_data = position
             else:
                 print "No new positions"
         if vehicle_data:
