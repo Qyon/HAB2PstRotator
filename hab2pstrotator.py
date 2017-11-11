@@ -9,7 +9,7 @@ from threading import Thread
 from Queue import Queue, Empty
 from time import sleep, time
 
-__version__ = "0.4.2"
+__version__ = "0.4.4"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
@@ -42,7 +42,7 @@ def pst_sender(com_queue, com_back_queue):
                 vehicle_data = None
             else:
                 print 'sleep'
-                ttl = 300
+                ttl = 150
                 while ttl > 0:
                     try:
                         data = com_queue.get_nowait()
@@ -59,7 +59,7 @@ def pst_sender(com_queue, com_back_queue):
                             'ttl': ttl,
                             'name': vehicle_name,
                         })
-            data_url = "http://spacenear.us/tracker/data.php?vehicles=%s&format=json&position_id=%d&max_positions=0" % (vehicle_name, last_position_id,)
+            data_url = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=0&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
             print data_url
             hab_data = json.loads(
                 urllib2.urlopen(
@@ -71,6 +71,7 @@ def pst_sender(com_queue, com_back_queue):
                     if position['vehicle'] == vehicle_name:
                         if not last_position_id or int(position['position_id']) > last_position_id:
                             vehicle_data = position
+                            last_position_id = int(vehicle_data['position_id'])
             else:
                 print "No new positions"
         if vehicle_data:
