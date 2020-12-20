@@ -9,14 +9,19 @@ from threading import Thread
 from Queue import Queue, Empty
 from time import sleep, time
 import logging
+import sys
 
-__version__ = "0.4.7"
+__version__ = "0.5.0"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
 logger = logging.getLogger()
 handler = logging.FileHandler('hab2pstrotator.log')
 handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+logger.addHandler(handler)
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
@@ -38,7 +43,7 @@ def pst_sender(com_queue, com_back_queue):
     while True:
         try:
             data = com_queue.get_nowait()
-            print data
+            logger.info("Tracking vehicle: %s" % data)
         except Empty:
             data = None
         if data:
@@ -51,7 +56,7 @@ def pst_sender(com_queue, com_back_queue):
                 last_sequence_id = 0
                 vehicle_data = None
             else:
-                print 'sleep'
+                logger.info('sleep')
                 ttl = 150
                 if next_wait:
                     ttl = next_wait
@@ -59,7 +64,7 @@ def pst_sender(com_queue, com_back_queue):
                 while ttl > 0:
                     try:
                         data = com_queue.get_nowait()
-                        print data
+                        logger.info(data)
                         vehicle_name = data
                         break
                     except Empty:
@@ -73,7 +78,7 @@ def pst_sender(com_queue, com_back_queue):
                             'name': vehicle_name,
                         })
             data_url = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=1&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
-            print data_url
+            logger.info(data_url)
             try:
                 hab_data = json.loads(
                     urllib2.urlopen(
@@ -82,7 +87,7 @@ def pst_sender(com_queue, com_back_queue):
                 )
             except Exception as e:
                 hab_data = {}
-                print "Exception"
+                logger.exception("Exception while downloading new position")
 
             if hab_data.get('positions'):
                 for position in hab_data['positions']['position']:
@@ -95,17 +100,17 @@ def pst_sender(com_queue, com_back_queue):
                                 next_wait = 50
 
             else:
-                print "No new positions"
+                logger.info("No new positions")
         if vehicle_data:
             last_position_id = int(vehicle_data['position_id'])
             last_sequence_id = int(vehicle_data['sequence'])
             pst_command = "<PST><LLH>%(gps_lat)s,%(gps_lon)s,%(gps_alt)s</LLH></PST>" % vehicle_data
-            print "%s %s" % (vehicle_data['gps_time'], pst_command,)
+            logger.info("%s %s" % (vehicle_data['gps_time'], pst_command,))
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(pst_command, ('127.0.0.1', 12000))
 
 def update_statusbar(args):
-    #print args
+    #logger.info(args)
     try:
         data = args[1].com_back_queue.get_nowait()
     except Empty:
@@ -179,6 +184,7 @@ class App:
 
 
     def refresh_list(self):
+        logger.info("refresh_list")
         self.track_button.config(state=DISABLED)
         self.track_button.config(state=DISABLED)
         self.status.set("Loading list")
@@ -233,11 +239,11 @@ class App:
             vehicle_name = self.vehicle_list[int(cur_sel[0])]
             self.com_queue.put(vehicle_name)
             vehicle = self.vehicle_data[vehicle_name]
-            # print vehicle
-            # <PST><LLH>44.434,25.064,10000</LLH></PST>
+            logger.info(vehicle)
 
 
 if __name__ == '__main__':
+    logger.info("Staring program")
     root = Tk()
 
     app = App(root)
