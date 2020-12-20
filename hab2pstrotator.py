@@ -8,10 +8,17 @@ from Tkinter import *
 from threading import Thread
 from Queue import Queue, Empty
 from time import sleep, time
+import logging
 
-__version__ = "0.4.5"
+__version__ = "0.4.7"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
+
+logger = logging.getLogger()
+handler = logging.FileHandler('hab2pstrotator.log')
+handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 def pst_sender(com_queue, com_back_queue):
     # print "thread"
