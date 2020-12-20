@@ -74,11 +74,16 @@ def pst_sender(com_queue, com_back_queue):
                         })
             data_url = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=1&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
             print data_url
-            hab_data = json.loads(
-                urllib2.urlopen(
-                    data_url
-                ).read()
-            )
+            try:
+                hab_data = json.loads(
+                    urllib2.urlopen(
+                        data_url
+                    ).read()
+                )
+            except Exception as e:
+                hab_data = {}
+                print "Exception"
+
             if hab_data.get('positions'):
                 for position in hab_data['positions']['position']:
                     if position['vehicle'] == vehicle_name:
