@@ -11,7 +11,7 @@ from time import sleep, time
 import logging
 import sys
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
@@ -77,7 +77,7 @@ def pst_sender(com_queue, com_back_queue):
                             'ttl': ttl,
                             'name': vehicle_name,
                         })
-            data_url = "https://spacenear.us/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=1&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
+            data_url = "https://legacy-snus.habhub.org/tracker/datanew.php?mode=1day&type=positions&format=json&max_positions=1&position_id=%d&vehicles=%s" % (last_position_id, vehicle_name)
             logger.info(data_url)
             try:
                 hab_data = json.loads(
