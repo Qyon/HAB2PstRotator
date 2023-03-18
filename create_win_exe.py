@@ -2,12 +2,15 @@ import calendar
 from datetime import datetime
 
 __author__ = 'Qyon'
-from distutils.core import setup
-import py2exe
+
+from py2exe import freeze
 import hab2pstrotator
 
-import os
 import glob
+
+import os
+import zipfile
+
 
 def find_data_files(source, target, patterns):
     """Locates the specified data-files and returns the matches
@@ -24,50 +27,38 @@ def find_data_files(source, target, patterns):
         raise ValueError("Magic not allowed in src, target")
     ret = {}
     for pattern in patterns:
-        pattern = os.path.join(source,pattern)
+        pattern = os.path.join(source, pattern)
         for filename in glob.glob(pattern):
             if os.path.isfile(filename):
-                targetpath = os.path.join(target,os.path.relpath(filename,source))
+                targetpath = os.path.join(target, os.path.relpath(filename, source))
                 path = os.path.dirname(targetpath)
-                ret.setdefault(path,[]).append(filename)
+                ret.setdefault(path, []).append(filename)
     return sorted(ret.items())
 
-setup(
-    name=hab2pstrotator.__app_name__,
-    description=hab2pstrotator.__full_app_name__,
-    version=hab2pstrotator.__version__,
-    author=hab2pstrotator.__author__,
-    author_email=hab2pstrotator.__author_email__,
+
+freeze(
+    version_info={
+        'version': hab2pstrotator.__version__,
+        'description': hab2pstrotator.__full_app_name__,
+        'product_name': hab2pstrotator.__app_name__,
+        'company_name': hab2pstrotator.__author__,
+        'comments': hab2pstrotator.__author_email__,
+
+    },
     windows=[
         {
             "script": "hab2pstrotator.py",
             "icon_resources": [(0, "spacenearus.ico")]
         }
     ],
-    data_files=find_data_files('','',[
+    data_files=find_data_files('', '', [
         '*.ico',
     ]),
-)
-setup(
-    name=hab2pstrotator.__app_name__,
-    description=hab2pstrotator.__full_app_name__,
-    version=hab2pstrotator.__version__,
-    author=hab2pstrotator.__author__,
-    author_email=hab2pstrotator.__author_email__,
-    windows=[
-        {
-            "script": "hab2pstrotator.py",
-            "icon_resources": [(0, "spacenearus.ico")]
-        }
-    ],
-    data_files=find_data_files('','',[
-        '*.ico',
-    ]),
+    options={
+        'packages': ['charset_normalizer']
+    }
 )
 
-
-import os
-import zipfile
 
 def zipdir(path, zip):
     for root, dirs, files in os.walk(path):
@@ -87,4 +78,4 @@ if os.path.exists(zip_file_name):
 zipf = zipfile.ZipFile(zip_file_name, 'w', compression=zipfile.ZIP_DEFLATED)
 zipdir(full_dir_name, zipf)
 zipf.close()
-print "Created dist zip file: %s" % (zip_file_name,)
+print("Created dist zip file: %s" % (zip_file_name,))

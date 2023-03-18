@@ -5,4 +5,8 @@
 /build
 /*~
 /virtualenv
-/hab2pstrotator - Kopia.py
+/venv_py37
+/venv
+/old
+/dist
+*.log
