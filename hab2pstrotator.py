@@ -13,7 +13,7 @@ import sys
 import requests as requests
 import sondehub
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __app_name__ = "HAB2PstRotator"
 __full_app_name__ = "%s v.%s" % (__app_name__, __version__,)
 
@@ -95,7 +95,7 @@ class App:
         self.track_button.config(state=DISABLED)
         self.status.set("Loading list")
         try:
-            response = requests.get("https://api.v2.sondehub.org/amateur/telemetry?duration=24h", timeout=30)
+            response = requests.get("https://api.v2.sondehub.org/amateur/telemetry?duration=1d", timeout=30)
             hab_data = json.loads(response.text)
             logger.info("Got data %d objects" % (len(hab_data)))
             self.status.set("Got data %d objects" % (len(hab_data)))
